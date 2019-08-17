@@ -1,0 +1,28 @@
+package server;
+
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.util.List;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
+
+public class MyFiles {
+	
+	private String path = "C:\\Users\\Amal\\Downloads\\Uni\\Semester 2\\COMPSYS 725\\Assignments\\Assignment-1\\SFTP\\";
+	
+	public void listAllFiles(String dir) {
+		try (Stream<Path> walk = Files.walk(Paths.get(path+dir))) {
+
+			List<String> result = walk.filter(Files::isRegularFile)
+					.map(x -> x.toString()).collect(Collectors.toList());
+
+			result.forEach(System.out::println);
+
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+	}
+
+}

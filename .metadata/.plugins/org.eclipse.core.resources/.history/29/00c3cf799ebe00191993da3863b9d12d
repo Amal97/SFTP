@@ -1,0 +1,50 @@
+package server;
+
+import java.io.File;
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.util.Date;
+import java.util.List;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
+
+public class MyFiles {
+	
+	private String convertToDate(long time) {
+		Date d = new Date(time * 1000);
+		return d.toString();
+
+	}
+
+	
+	private String path = "C:\\Users\\Amal\\Downloads\\Uni\\Semester 2\\COMPSYS 725\\Assignments\\Assignment-1\\SFTP\\";
+	
+	public String listAllFiles(String dir) {
+		String fullPath = path+dir+"\\";
+		try (Stream<Path> walk = Files.walk(Paths.get(fullPath))) {
+			String allFiles = fullPath+"\r\n" ;
+
+	        File folder = new File(dir);
+	        File[] listOfFiles = folder.listFiles();
+			
+			List<String> result = walk.filter(Files::isRegularFile)
+					.map(x -> x.toString()).collect(Collectors.toList());
+			
+
+			for(int i = 0; i < result.size(); i++) {
+				String file = result.get(i).replace(fullPath, "");
+				String lastModified = d. listOfFiles[i].lastModified();
+				allFiles = allFiles + file + "\r\n";
+			}
+		//	System.out.println(allFiles);
+			return allFiles;
+
+		} catch (IOException e) {
+			e.printStackTrace();
+			return "No Files Found";
+		}
+	}
+
+}
