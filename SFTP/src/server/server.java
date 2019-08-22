@@ -57,10 +57,8 @@ public class server {
 				 outToClient = 
 						new DataOutputStream(os); 
 				
-				outToClient.writeBytes("+ Amals Server SFTP Service\n");
-				outToClient.flush();
-
-
+				 clientPrinter("+ Amals Server SFTP Service");
+				
 				while(running) {
 					
 				    fullComand = inFromClient.readLine();
@@ -96,7 +94,6 @@ public class server {
 							
 						case "PASS":
 							String password = fullComand.substring(4);
-	//						String password = UserCommand.substring(4);
 							if(account.alreadyInAccount() && account.validPassword(password)){
 								clientPrinter("! Logged in");
 							}
@@ -110,7 +107,6 @@ public class server {
 						
 						case "TYPE":
 							String type = fullComand.substring(4);
-	//						String type = UserCommand.substring(4);
 							if(type == "A") {
 								clientPrinter("+Using Ascii mode");
 							}
@@ -127,7 +123,6 @@ public class server {
 						
 						case "LIST":
 							String format = fullComand.substring(5,6);
-	//						String format = UserCommand.substring(5,6);
 							String dir = inFromClient.readLine().substring(6).trim();
 							if(format.contentEquals("F")) {
 								String toPrint = myFiles.listAllFiles(dir,"F");
@@ -142,7 +137,6 @@ public class server {
 						case "CDIR":
 						    if(account.alreadyInAccount()) {
 								String newDir = fullComand.substring(5);
-	//							String newDir = UserCommand.substring(5);
 	                            String checkNewDir = Paths.get(currentDirectory, newDir).toString();
 								Path path = Paths.get(checkNewDir);
 								
@@ -172,9 +166,7 @@ public class server {
 						case "KILL":
 						    if(account.alreadyInAccount()) {
 								String fileToDelete = fullComand.substring(5);
-	//							String fileToDelete = UserCommand.substring(5);
 		                        String fileLocation = Paths.get(currentDirectory, fileToDelete).toString();
-	//							Path path = Paths.get(fileLocation);
 						        File file = new File(fileLocation); 
 								if(file.delete()) { 
 						            clientPrinter("+" + fileToDelete + " deleted"); 
@@ -191,7 +183,6 @@ public class server {
 						case "NAME":
 						    if(account.alreadyInAccount()) {
 								String tempFileToRename = fullComand.substring(5);
-	//							String tempFileToRename = UserCommand.substring(5);
 		                        String fileLocation = Paths.get(currentDirectory, fileToRename).toString();
 								Path path = Paths.get(fileLocation);
 						        File file = new File(fileLocation); 
@@ -210,7 +201,6 @@ public class server {
 							
 						case "TOBE":
 							String newFileName = fullComand.substring(5);
-	//						String newFileName = UserCommand.substring(5);
 							if(fileToRename.equals("")) {
 								clientPrinter("-File wasn't renamed because filename was not specified or was invalid");
 							}
@@ -231,7 +221,6 @@ public class server {
 							
 						case "RETR":
 							String fileName = fullComand.substring(5);
-	//						String fileName = UserCommand.substring(5);
 	                        String fileLocation = Paths.get(currentDirectory, fileName).toString();
 							File file = new File(fileLocation);
 							Path path = Paths.get(fileLocation);
@@ -246,13 +235,13 @@ public class server {
 							break;
 						
 						case "SEND":
-							  File fileToSend = new File(fileToSendLocation);
-						      byte[] mybytearray = new byte[(int) fileToSend.length()];
-						      BufferedInputStream bis = new BufferedInputStream(new FileInputStream(fileToSend));
-						      bis.read(mybytearray, 0, mybytearray.length);
-						      os.write(mybytearray, 0, mybytearray.length);
-						      os.flush();	
-						      
+							  File fileToSend = new File(fileToSendLocation);							  
+							  try {
+								  byte[] content = Files.readAllBytes(fileToSend.toPath());
+								  os.write(content);
+							  } catch(IOException e) {
+								  e.printStackTrace();
+							  }			      
 						      break;
 						      
 	                    default:
@@ -269,3 +258,52 @@ public class server {
 	}
 
 }
+
+//import java.io.BufferedReader;
+//import java.io.ByteArrayInputStream;
+//import java.io.ByteArrayOutputStream;
+//import java.io.InputStream;
+//import java.io.InputStreamReader;
+//
+//public class Test {
+//    public static void main(String[] args) {
+//        try {
+//            //read file and store binary in bout
+//            ByteArrayOutputStream bout = new ByteArrayOutputStream();
+//            InputStream in = Test.class.getResourceAsStream("test.txt");
+//            byte buffer[] = new byte[4096];
+//            
+//            int read = 0;
+//            do {
+//                read = in.read(buffer);
+//                if(read != -1) {
+//                    bout.write(buffer, 0, read);
+//                }
+//            } while(read != -1);
+//            
+//            //copy binary to an input stream for reading and parsing
+//            //save this for multiple uses
+//            ByteArrayInputStream bin = new ByteArrayInputStream(bout.toByteArray());
+//            BufferedReader bufRead = new BufferedReader(new InputStreamReader(bin));
+//            
+//            String line = "";
+//            
+//            do {
+//                line = bufRead.readLine();
+//                //parse ascii part here
+//                if(line != null) {
+//                    System.out.println(line);
+//                }
+//            } while(line != null);
+//            
+//            //now that you read the ascii part decide what you need to do.
+//            //to read binary, just do reads from bin directly
+//        }
+//        catch(Exception e) {
+//            e.printStackTrace();
+//        }
+//    }
+//    
+//}
+
+
