@@ -72,18 +72,26 @@ public class client {
 			}
 
 			r = inFromServer.readLine();
-			System.out.println(r+"\n");
+			System.out.println(r);
+
+			while(inFromServer.ready()) {
+				r = inFromServer.readLine();
+				System.out.println(r);
+			}
+				
 
 
 			if(outgoingMessage.contains("RETR")) {
 				receivedFileName = outgoingMessage.substring(5);				
 				receivedFileSize = Integer.parseInt(r);
+				long totalFreeSpace =  new File("c:").getFreeSpace() ;
+				System.out.println("total free space" + totalFreeSpace);
+				if(totalFreeSpace > receivedFileSize) {
+					outgoingMessage = "STOP";
+					outToServer.writeBytes(outgoingMessage + '\n');
+					outToServer.flush();
+				}
 			}
-
-
-
 		}
-
 	}
-
 }

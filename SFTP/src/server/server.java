@@ -123,10 +123,12 @@ public class server {
 						
 						case "LIST":
 							String format = fullComand.substring(5,6);
-							String dir = inFromClient.readLine().substring(6).trim();
+							String dir = fullComand.substring(6).trim();
 							if(format.contentEquals("F")) {
 								String toPrint = myFiles.listAllFiles(dir,"F");
-								clientPrinter(toPrint);
+								outToClient.writeBytes(toPrint+"\n");
+								outToClient.flush();
+								//clientPrinter(toPrint);
 							}
 							else if(format.contentEquals("V")) {
 								String toPrint = myFiles.listAllFiles(dir,"V");
@@ -243,6 +245,10 @@ public class server {
 								  e.printStackTrace();
 							  }			      
 						      break;
+						
+						case "STOP":
+							clientPrinter("+ok, RETR aborted");
+						      break;				
 						      
 	                    default:
 	                        user = "-Unknown Command";
