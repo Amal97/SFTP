@@ -23,14 +23,281 @@ public class server {
 	}
 	
 	public static void clientPrinter(String message) throws IOException {
-		if(tester == 0) {
-			outToClient.writeBytes(message+"\n");
-			outToClient.flush();
-		}
-		else {
-			System.out.println(message);
+		try {
+			if(tester == 0) {
+				outToClient.writeBytes(message+"\n");
+				outToClient.flush();
+			}
+			else {
+				System.out.println(message);
+			}
+		}catch (Exception e) {
+			System.out.println("Error");
 		}
 	}
+	
+	private static void handleUser(String fullCommand, Account account) throws IOException {
+		String user = fullCommand.substring(4) ;
+		if(account.isLoggedIn(user)) {
+			clientPrinter("!<user-id> logged in");
+		}
+		else if(account.validUser(user)) {
+			clientPrinter("+User-id valid, send account and password");
+		}
+		else {
+			clientPrinter("-Invalid user-id, try again");
+		}
+	}
+	
+	private static void handleAcct(String fullCommand, Account account) throws IOException {
+		String accountName = fullCommand.substring(4);
+		
+		if(account.isLoggedIn(accountName)) {
+			clientPrinter("! Account valid, logged-in");
+		}
+		else if(account.validAccount(accountName)) {
+			clientPrinter("+Account valid, send password");
+		}
+		else {
+			clientPrinter("Invalid account, try again");
+		}	
+	}
+	
+	private static void handlePass(String fullCommand, Account account) throws IOException {
+		String password = fullCommand.substring(4);
+		if(account.alreadyInAccount() && account.validPassword(password)){
+			clientPrinter("! Logged in");
+		}
+		else if(!account.alreadyInAccount() && account.validPassword(password)) {
+			clientPrinter("Password ok but you haven't specified the account\"");
+		}
+		else {
+			clientPrinter("-Wrong password, try again");
+		}		
+	}
+	
+	private static void handleType(String fullCommand) throws IOException {
+		String type = fullCommand.substring(5);
+
+		if(type.equals("A")) {
+			clientPrinter("+Using Ascii mode");
+		}
+		else if(type.equals("B")) {
+			clientPrinter("+Using Binary mode");
+		}
+		else if(type.equals("C")) {
+			clientPrinter("+Using Continuous mode");
+		}
+		else {
+			clientPrinter("-Type not valid");
+		}	
+	}
+	
+	private static void handleList(String fullCommand, MyFiles myFiles) throws IOException {
+		String format = fullCommand.substring(5,6);
+		String dir = fullCommand.substring(6).trim();
+		if(format.contentEquals("F")) {
+			String toPrint = myFiles.listAllFiles(dir,"F");
+			outToClient.writeBytes(toPrint+"\n");
+			outToClient.flush();
+			//clientPrinter(toPrint);
+		}
+		else if(format.contentEquals("V")) {
+			String toPrint = myFiles.listAllFiles(dir,"V");
+			clientPrinter(toPrint);
+		}
+	}
+	
+	private static String handleCDIR(String fullCommand, Account account, String currentDirectory) throws IOException {
+	    if(account.alreadyInAccount()) {
+			String newDir = fullCommand.substring(5);
+            String checkNewDir = Paths.get(currentDirectory, newDir).toString();
+			Path path = Paths.get(checkNewDir);
+			
+			if(newDir.equals("..")) {
+				currentDirectory = goBackDir();
+				clientPrinter("!Changed working dir to "+currentDirectory);
+			}
+			else if(newDir.equals("/")) {
+				currentDirectory = "C:\\";
+				clientPrinter("!Changed working dir to "+path);
+			}
+			else {
+				if(Files.exists(path)) {
+					currentDirectory = checkNewDir;
+					clientPrinter("!Changed working dir to "+path);
+				}
+				else {
+					clientPrinter("-Can't connect to directory because: directory doesn't exist");
+				}
+		    }
+	    }
+	    else {
+			clientPrinter("-You must send ACCT and PASS to use CDIR");
+	    }
+		return currentDirectory;
+
+	}
+	
+	private static void handleKill(String fullCommand, Account account, String currentDirectory) throws IOException {
+	    if(account.alreadyInAccount()) {
+			String fileToDelete = fullCommand.substring(5);
+            String fileLocation = Paths.get(currentDirectory, fileToDelete).toString();
+	        File file = new File(fileLocation); 
+			if(file.delete()) { 
+	            clientPrinter("+" + fileToDelete + " deleted"); 
+	        } 
+	        else { 
+	            clientPrinter("-Not deleted because file doesn't exist"); 
+	        }
+	    }
+		else {
+			clientPrinter("-You must send ACCT and PASS to use CDIR");
+	    }
+	}
+	
+	private static void handleName(String fullCommand, Account account, String currentDirectory, String fileToRename) throws IOException {
+	    if(account.alreadyInAccount()) {
+			String tempFileToRename = fullCommand.substring(5);
+            String fileLocation = Paths.get(currentDirectory, fileToRename).toString();
+			Path path = Paths.get(fileLocation);
+	        File file = new File(fileLocation); 
+			if(Files.exists(path)) {
+				fileToRename = tempFileToRename;
+				clientPrinter("+File exists");
+			}
+			else {
+				clientPrinter("-Can't find "+ fileToRename +"\n NAME command is aborted, don't send TOBE.");
+			}
+	    }
+		else {
+			clientPrinter("-You must send ACCT and PASS to use CDIR");
+	    }
+	}
+	
+	private static void handleToBe(String fullCommand, String currentDirectory, String fileToRename) throws IOException {
+		String newFileName = fullCommand.substring(5);
+		if(fileToRename.equals("")) {
+			clientPrinter("-File wasn't renamed because filename was not specified or was invalid");
+		}
+		else {
+            String fileLocation = Paths.get(currentDirectory, fileToRename).toString();
+            String newName = Paths.get(currentDirectory, newFileName).toString();
+			File file = new File(fileLocation);
+			File fileRenameTo = new File(newName);
+			file.renameTo(fileRenameTo);
+			newFileName = "";
+		}
+	}
+	
+	private static String handleRETR(String fullCommand, String currentDirectory, String fileToSendLocation) throws IOException {
+		String fileName = fullCommand.substring(5);
+        String fileLocation = Paths.get(currentDirectory, fileName).toString();
+		File file = new File(fileLocation);
+		Path path = Paths.get(fileLocation);
+		if(Files.exists(path)) {
+			fileToSendLocation = fileLocation;
+			long fileSize = file.length() ;
+			clientPrinter(String.valueOf(fileSize));
+		}
+		else {
+			clientPrinter("-File doesn't exist");
+		}
+		return fileToSendLocation;
+	}
+	
+	private static void handleSend(OutputStream os, String fileToSendLocation) throws IOException {
+		  File fileToSend = new File(fileToSendLocation);							  
+		  try {
+			  byte[] content = Files.readAllBytes(fileToSend.toPath());
+			  os.write(content);
+			  clientPrinter("File Saved on Client's side");
+		  } catch(IOException e) {
+			  clientPrinter("File Could not be saved");
+			  e.printStackTrace();
+		  }	
+	}
+	
+	private static int handleSTOR(String fullCommand, String serverFiles) throws IOException {
+		String param = fullCommand.substring(5,8);
+		String filename = fullCommand.substring(9);
+		String locationOfFile = currentDir() + serverFiles + filename; 
+		int storeType = 0;
+		
+		File file = new File(locationOfFile);
+		
+		if(param.equals("NEW")) {
+			if(file.exists()) {
+				storeType = 2;
+				clientPrinter("+File exists, will create new generation of file");
+			}
+			else {
+				storeType = 0 ;
+				clientPrinter("+File does not exist, will create new file");
+			}
+		}
+		else if(param.contentEquals("OLD")) {
+			if(file.exists()) {
+				storeType = 3;
+				clientPrinter("+Will write over old file");
+			}
+			else {
+				storeType = 1;
+				clientPrinter("+Will create new file");
+			}
+		}
+		else if(param.contentEquals("APP")) {
+			if(file.exists()) {
+				storeType = 0;
+				clientPrinter("+Will append to file");
+			}
+			else {
+				storeType = 1;
+				clientPrinter("+Will create file");
+			}
+		}
+		return storeType;
+	}
+	
+	private static void handleSize(String fullCommand, Socket connectionSocket, int storeType, String serverFiles, String fileNameToStore) throws IOException {
+		String sizeOfFileString = fullCommand.substring(5);
+		long sizeOfFile = Integer.parseInt(sizeOfFileString);
+
+		long totalFreeSpace =  new File("c:").getFreeSpace() ;
+		
+		if(totalFreeSpace < sizeOfFile) {
+			clientPrinter("-Not enough room, don't send it");
+		}
+		else {
+			clientPrinter("+ok, waiting for file");
+			byte[] receivedFile = new byte[(int) sizeOfFile];
+			for (int i=0; i<sizeOfFile; i++) {
+				receivedFile[i] = (byte) connectionSocket.getInputStream().read();
+			}
+			try {
+
+				// Write byte array to a file
+				if ((storeType == 1) || (storeType == 3)) {
+					FileOutputStream stream = new FileOutputStream(currentDir() + serverFiles + fileNameToStore);
+				    stream.write(receivedFile);
+				    stream.close();
+				} else if (storeType == 2) {
+					FileOutputStream stream = new FileOutputStream(currentDir() + serverFiles + "new-" + fileNameToStore);
+				    stream.write(receivedFile);
+				    stream.close();
+				} else {
+					FileOutputStream stream = new FileOutputStream(currentDir() + serverFiles + fileNameToStore, true);
+				    stream.write(receivedFile);
+				    stream.close();
+				}
+				clientPrinter("+Saved fileNameToStore");
+			} catch (Exception e) {
+				storeType = 0;
+				clientPrinter("-Couldn’t save");
+			}
+		}
+	}
+	
 	
 	public static void main(String argv[]) throws Exception{
 		try {
@@ -38,11 +305,14 @@ public class server {
 
 			Account account = new Account();
 			MyFiles myFiles = new MyFiles();
+			String serverFiles = "\\files\\";
 			String currentDirectory = currentDir();
 			String fileToRename = "";
 			String fileToSendLocation = "";
-			String fullComand = "";
+			String fullcommand = "";
 			String command = "";
+			int storeType = 0;
+			String fileNameToStore = "";
 			
 			boolean running = true;
 
@@ -61,159 +331,44 @@ public class server {
 				
 				while(running) {
 					
-				    fullComand = inFromClient.readLine();
-					command = fullComand.substring(0,4);
+				    fullcommand = inFromClient.readLine();
+					command = fullcommand.substring(0,4);
 
 					switch (command) {
 						case "USER":
-							String user = fullComand.substring(4) ;
-							if(account.isLoggedIn(user)) {
-								clientPrinter("!<user-id> logged in");
-							}
-							else if(account.validUser(user)) {
-								clientPrinter("+User-id valid, send account and password");
-							}
-							else {
-								clientPrinter("-Invalid user-id, try again");
-							}
+							handleUser(fullcommand, account);
 							break;
 							
 						case "ACCT":
-							String accountName = fullComand.substring(4);
-	
-							if(account.isLoggedIn(accountName)) {
-								clientPrinter("! Account valid, logged-in");
-							}
-							else if(account.validAccount(accountName)) {
-								clientPrinter("+Account valid, send password");
-							}
-							else {
-								clientPrinter("Invalid account, try again");
-							}		
+							handleAcct(fullcommand, account);
 							break;
 							
 						case "PASS":
-							String password = fullComand.substring(4);
-							if(account.alreadyInAccount() && account.validPassword(password)){
-								clientPrinter("! Logged in");
-							}
-							else if(!account.alreadyInAccount() && account.validPassword(password)) {
-								clientPrinter("Password ok but you haven't specified the account\"");
-							}
-							else {
-								clientPrinter("-Wrong password, try again");
-							}	
+							handlePass(fullcommand, account);
 							break;
 						
 						case "TYPE":
-							String type = fullComand.substring(4);
-							if(type == "A") {
-								clientPrinter("+Using Ascii mode");
-							}
-							else if(type == "B") {
-								clientPrinter("+Using Binary mode");
-							}
-							else if(type =="C") {
-								clientPrinter("+Using Continuous mode");
-							}
-							else {
-								clientPrinter("-Type not valid");
-							}
+							handleType(fullcommand);
 							break;
 						
 						case "LIST":
-							String format = fullComand.substring(5,6);
-							String dir = fullComand.substring(6).trim();
-							if(format.contentEquals("F")) {
-								String toPrint = myFiles.listAllFiles(dir,"F");
-								outToClient.writeBytes(toPrint+"\n");
-								outToClient.flush();
-								//clientPrinter(toPrint);
-							}
-							else if(format.contentEquals("V")) {
-								String toPrint = myFiles.listAllFiles(dir,"V");
-								clientPrinter(toPrint);
-							}
+							handleList(fullcommand, myFiles);
 							break;
 						
 						case "CDIR":
-						    if(account.alreadyInAccount()) {
-								String newDir = fullComand.substring(5);
-	                            String checkNewDir = Paths.get(currentDirectory, newDir).toString();
-								Path path = Paths.get(checkNewDir);
-								
-								if(newDir.equals("..")) {
-									currentDirectory = goBackDir();
-									clientPrinter("!Changed working dir to "+currentDirectory);
-								}
-								else if(newDir.equals("/")) {
-									currentDirectory = "C:\\";
-									clientPrinter("!Changed working dir to "+path);
-								}
-								else {
-									if(Files.exists(path)) {
-										currentDirectory = checkNewDir;
-										clientPrinter("!Changed working dir to "+path);
-									}
-									else {
-										clientPrinter("-Can't connect to directory because: directory doesn't exist");
-									}
-							    }
-						    }
-						    else {
-								clientPrinter("-You must send ACCT and PASS to use CDIR");
-						    }
+							currentDirectory = handleCDIR(fullcommand, account, currentDirectory);
 						    break;
 						    
 						case "KILL":
-						    if(account.alreadyInAccount()) {
-								String fileToDelete = fullComand.substring(5);
-		                        String fileLocation = Paths.get(currentDirectory, fileToDelete).toString();
-						        File file = new File(fileLocation); 
-								if(file.delete()) { 
-						            clientPrinter("+" + fileToDelete + " deleted"); 
-						        } 
-						        else { 
-						            clientPrinter("-Not deleted because file doesn't exist"); 
-						        }
-						    }
-							else {
-								clientPrinter("-You must send ACCT and PASS to use CDIR");
-						    }
+							handleKill(fullcommand, account, currentDirectory);
 							break;
 						
 						case "NAME":
-						    if(account.alreadyInAccount()) {
-								String tempFileToRename = fullComand.substring(5);
-		                        String fileLocation = Paths.get(currentDirectory, fileToRename).toString();
-								Path path = Paths.get(fileLocation);
-						        File file = new File(fileLocation); 
-								if(Files.exists(path)) {
-									fileToRename = tempFileToRename;
-									clientPrinter("+File exists");
-								}
-								else {
-									clientPrinter("-Can't find "+ fileToRename +"\n NAME command is aborted, don't send TOBE.");
-								}
-						    }
-							else {
-								clientPrinter("-You must send ACCT and PASS to use CDIR");
-						    }
+							handleName(fullcommand, account, currentDirectory, fileToRename);
 							break;
 							
 						case "TOBE":
-							String newFileName = fullComand.substring(5);
-							if(fileToRename.equals("")) {
-								clientPrinter("-File wasn't renamed because filename was not specified or was invalid");
-							}
-							else {
-		                        String fileLocation = Paths.get(currentDirectory, fileToRename).toString();
-		                        String newName = Paths.get(currentDirectory, newFileName).toString();
-								File file = new File(fileLocation);
-								File fileRenameTo = new File(newName);
-								file.renameTo(fileRenameTo);
-								newFileName = "";
-							}
+							handleToBe(fullcommand, currentDirectory, fileToRename);
 							break;
 						
 						case "DONE":
@@ -222,36 +377,28 @@ public class server {
 							break;
 							
 						case "RETR":
-							String fileName = fullComand.substring(5);
-	                        String fileLocation = Paths.get(currentDirectory, fileName).toString();
-							File file = new File(fileLocation);
-							Path path = Paths.get(fileLocation);
-							if(Files.exists(path)) {
-								fileToSendLocation = fileLocation;
-								long fileSize = file.length() ;
-								clientPrinter(String.valueOf(fileSize));
-							}
-							else {
-								clientPrinter("-File doesn't exist");
-							}
+							fileToSendLocation = handleRETR(fullcommand, currentDirectory, fileToSendLocation);
 							break;
 						
 						case "SEND":
-							  File fileToSend = new File(fileToSendLocation);							  
-							  try {
-								  byte[] content = Files.readAllBytes(fileToSend.toPath());
-								  os.write(content);
-							  } catch(IOException e) {
-								  e.printStackTrace();
-							  }			      
+							handleSend(os, fileToSendLocation);
 						      break;
 						
 						case "STOP":
 							clientPrinter("+ok, RETR aborted");
-						      break;				
+						    break;
+						      
+						case "STOR":
+							fileNameToStore = fullcommand.substring(9);
+							storeType = handleSTOR(fullcommand, serverFiles);
+							break;
+							
+						case "SIZE":
+							handleSize(fullcommand, connectionSocket, storeType, serverFiles, fileNameToStore); 
+							break;
 						      
 	                    default:
-	                        user = "-Unknown Command";
+	                    	clientPrinter("-Unknown Command");
 	                        break;
 					}
 				}
@@ -264,52 +411,3 @@ public class server {
 	}
 
 }
-
-//import java.io.BufferedReader;
-//import java.io.ByteArrayInputStream;
-//import java.io.ByteArrayOutputStream;
-//import java.io.InputStream;
-//import java.io.InputStreamReader;
-//
-//public class Test {
-//    public static void main(String[] args) {
-//        try {
-//            //read file and store binary in bout
-//            ByteArrayOutputStream bout = new ByteArrayOutputStream();
-//            InputStream in = Test.class.getResourceAsStream("test.txt");
-//            byte buffer[] = new byte[4096];
-//            
-//            int read = 0;
-//            do {
-//                read = in.read(buffer);
-//                if(read != -1) {
-//                    bout.write(buffer, 0, read);
-//                }
-//            } while(read != -1);
-//            
-//            //copy binary to an input stream for reading and parsing
-//            //save this for multiple uses
-//            ByteArrayInputStream bin = new ByteArrayInputStream(bout.toByteArray());
-//            BufferedReader bufRead = new BufferedReader(new InputStreamReader(bin));
-//            
-//            String line = "";
-//            
-//            do {
-//                line = bufRead.readLine();
-//                //parse ascii part here
-//                if(line != null) {
-//                    System.out.println(line);
-//                }
-//            } while(line != null);
-//            
-//            //now that you read the ascii part decide what you need to do.
-//            //to read binary, just do reads from bin directly
-//        }
-//        catch(Exception e) {
-//            e.printStackTrace();
-//        }
-//    }
-//    
-//}
-
-
