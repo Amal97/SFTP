@@ -9,7 +9,7 @@ public class Account {
 	static String account = "";
 	static String password = "";
 	int userFoundInLine;
-	static String filepath = "C:\\Users\\Amal\\Downloads\\Uni\\Semester 2\\COMPSYS 725\\Assignments\\Assignment-1\\SFTP\\src\\server\\data.txt";
+	static String filepath = System.getProperty("user.dir") + "\\src\\server\\data.txt";
 	boolean loggedIn = false;
 	
 	private static Scanner x;

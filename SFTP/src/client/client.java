@@ -11,7 +11,7 @@ public class client {
 	public static String currentDir() {
 		return System.getProperty("user.dir");
 	}
-	
+
 	// FIX PATH IN ALL FILES
 
 	public static void main(String argv[]) throws Exception{
@@ -31,16 +31,14 @@ public class client {
 		BufferedReader inFromServer = new BufferedReader(new InputStreamReader(clientSocket.getInputStream())); 
 		String outgoingMessage;
 		String r;
-		
+
 		String fileToSend = "";
-		
+
 		r = inFromServer.readLine();
 		System.out.println(r+"\n");
-		
+
 		while(true) {
 			outgoingMessage = inFromUser.readLine();
-//			outToServer.writeBytes(outgoingMessage + '\n');
-//			outToServer.flush();
 
 			if(outgoingMessage.contains("TYPE")) {
 				outToServer.writeBytes(outgoingMessage + '\n');
@@ -51,7 +49,7 @@ public class client {
 			else if(outgoingMessage.contains("SEND")) {
 				outToServer.writeBytes(outgoingMessage + '\n');
 				outToServer.flush();
-				
+
 				byte[] bytes = new byte[(int)receivedFileSize]; // Declare byte array with file size
 				boolean worked = false;
 				boolean binary = false;
@@ -86,24 +84,26 @@ public class client {
 					// Stop socket timeout immediately
 					clientSocket.setSoTimeout(0);
 					System.out.println("Could not receive file");
+				}catch(Exception e) {
+					clientSocket.setSoTimeout(0);
 				}
 			}
-			
+
 			else if(outgoingMessage.contains("STOR")) {
 				fileToSend = outgoingMessage.substring(9);
 				outToServer.writeBytes(outgoingMessage + '\n');
 				outToServer.flush();
 			}
-			
+
 			else if(outgoingMessage.contains("SIZE")) {
 				String locationOfFile = currentDir() + clientFiles + fileToSend; 
-				
+
 				File file = new File(locationOfFile);		
-				
+
 				outgoingMessage = "SIZE " + Long.toString(file.length());
 				outToServer.writeBytes(outgoingMessage + '\n');
 				outToServer.flush();
-				
+
 				r = inFromServer.readLine();
 				System.out.println(r);
 
@@ -112,7 +112,6 @@ public class client {
 					os.write(content);
 
 				} catch(IOException e) {
-					e.printStackTrace();
 				}	
 			}else {	
 				outToServer.writeBytes(outgoingMessage + '\n');
@@ -129,14 +128,19 @@ public class client {
 
 
 			if(outgoingMessage.contains("RETR")) {
-				receivedFileName = outgoingMessage.substring(5);				
-				receivedFileSize = Integer.parseInt(r);
-				long totalFreeSpace =  new File("c:").getFreeSpace() ;
-				System.out.println("total free space" + totalFreeSpace);
-				if(totalFreeSpace < receivedFileSize) {
-					outgoingMessage = "STOP";
-					outToServer.writeBytes(outgoingMessage + '\n');
-					outToServer.flush();
+				try {
+					receivedFileName = outgoingMessage.substring(5);				
+					receivedFileSize = Integer.parseInt(r);
+					long totalFreeSpace =  new File("c:").getFreeSpace() ;
+					System.out.println("total free space" + totalFreeSpace);
+					if(totalFreeSpace < receivedFileSize) {
+						outgoingMessage = "STOP";
+						outToServer.writeBytes(outgoingMessage + '\n');
+						outToServer.flush();
+					}
+				}
+				catch (Exception e) {
+
 				}
 			}
 		}
