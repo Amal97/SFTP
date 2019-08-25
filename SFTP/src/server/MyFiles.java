@@ -21,16 +21,12 @@ public class MyFiles {
 
 	public String listAllFiles(String dir, String format) {
 		String fullPath = "";
-//		if(!dir.equals("")) {
-//			fullPath = dir+"\\";
-//		}
-//		else {
-			//dir = path;
-			fullPath = dir;
-		//}
+
+		fullPath = dir;
+
 		try (Stream<Path> walk = Files.walk(Paths.get(fullPath))) {
 			String allFiles = "+" + fullPath+"\r\n" ;
-			
+
 			File folder = new File(dir);
 			File[] listOfFiles = folder.listFiles();
 

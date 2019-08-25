@@ -32,7 +32,6 @@ public class Account {
 		return true;
 	}
 
-	int passwordFound;
 	public boolean validPassword(String password) {
 		boolean found = false;
 		try {

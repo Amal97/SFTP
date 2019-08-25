@@ -13,6 +13,7 @@ public class server {
 
 	static DataOutputStream  outToClient;
 	static Account account = new Account();
+	static boolean loggedIn = false;
 
 
 	public static String currentDir() {
@@ -32,6 +33,7 @@ public class server {
 		String user = fullCommand.substring(5) ;
 		if(account.validUser(user)) {
 			if(account.isLoggedIn(user)) {
+				loggedIn = true;
 				clientPrinter("!"+ user + " logged in");
 			}
 			else {
@@ -47,6 +49,7 @@ public class server {
 		String accountName = fullCommand.substring(4);
 
 		if(account.isLoggedIn(accountName)) {
+			loggedIn = true;
 			clientPrinter("! Account valid, logged-in");
 		}
 		else if(account.validAccount(accountName)) {
@@ -60,6 +63,7 @@ public class server {
 	private static void handlePass(String fullCommand) throws IOException {
 		String password = fullCommand.substring(4);
 		if(account.alreadyInAccount() && account.validPassword(password)){
+			loggedIn = true;
 			clientPrinter("! Logged in");
 		}
 		else if(!account.alreadyInAccount() && account.validPassword(password)) {
@@ -71,37 +75,47 @@ public class server {
 	}
 
 	private static void handleType(String fullCommand) throws IOException {
-		String type = fullCommand.substring(5);
+		if(loggedIn) {
+			String type = fullCommand.substring(5);
 
-		if(type.equals("A")) {
-			clientPrinter("+Using Ascii mode");
-		}
-		else if(type.equals("B")) {
-			clientPrinter("+Using Binary mode");
-		}
-		else if(type.equals("C")) {
-			clientPrinter("+Using Continuous mode");
+			if(type.equals("A")) {
+				clientPrinter("+Using Ascii mode");
+			}
+			else if(type.equals("B")) {
+				clientPrinter("+Using Binary mode");
+			}
+			else if(type.equals("C")) {
+				clientPrinter("+Using Continuous mode");
+			}
+			else {
+				clientPrinter("-Type not valid");
+			}
 		}
 		else {
-			clientPrinter("-Type not valid");
-		}	
+			clientPrinter("Please log in");
+		}
 	}
 
 	private static void handleList(String fullCommand, MyFiles myFiles, String currentDirectory) throws IOException {
-		String format = fullCommand.substring(5,6);
-		String dir = currentDirectory + "\\" + fullCommand.substring(6).trim();
-		if(format.contentEquals("F")) {
-			String toPrint = myFiles.listAllFiles(dir,"F");
-			clientPrinter(toPrint);
+		if(loggedIn) {
+			String format = fullCommand.substring(5,6);
+			String dir = currentDirectory + "\\" + fullCommand.substring(6).trim();
+			if(format.contentEquals("F")) {
+				String toPrint = myFiles.listAllFiles(dir,"F");
+				clientPrinter(toPrint);
+			}
+			else if(format.contentEquals("V")) {
+				String toPrint = myFiles.listAllFiles(dir,"V");
+				clientPrinter(toPrint);
+			}
 		}
-		else if(format.contentEquals("V")) {
-			String toPrint = myFiles.listAllFiles(dir,"V");
-			clientPrinter(toPrint);
+		else {
+			clientPrinter("Please log in");
 		}
 	}
 
 	private static String handleCDIR(String fullCommand, Account account, String currentDirectory) throws IOException {
-		if(account.alreadyInAccount()) {
+		if(loggedIn) {
 			String newDir = fullCommand.substring(5);
 			String checkNewDir = Paths.get(currentDirectory, newDir).toString();
 			Path path = Paths.get(checkNewDir);
@@ -132,7 +146,7 @@ public class server {
 	}
 
 	private static void handleKill(String fullCommand, Account account, String currentDirectory) throws IOException {
-		if(account.alreadyInAccount()) {
+		if(loggedIn) {
 			String fileToDelete = "";
 			try {
 				fileToDelete = fullCommand.substring(5);
@@ -155,7 +169,7 @@ public class server {
 
 	private static String handleName(String fullCommand, Account account, String currentDirectory) throws IOException {
 		String fileToRename = "";
-		if(account.alreadyInAccount()) {
+		if(loggedIn) {
 			String tempFileToRename = "";
 			try {
 				tempFileToRename = fullCommand.substring(5);
@@ -181,21 +195,23 @@ public class server {
 	}
 
 	private static void handleToBe(String fullCommand, String currentDirectory, String fileToRename) throws IOException {
-		try {
-			String newFileName = fullCommand.substring(5);
-			if(fileToRename.equals("")) {
+		if(loggedIn) {
+			try {
+				String newFileName = fullCommand.substring(5);
+				if(fileToRename.equals("")) {
+					clientPrinter("-File wasn't renamed because filename was not specified or was invalid");
+				}
+				else {
+					String fileLocation = Paths.get(currentDirectory, fileToRename).toString();
+					String newName = Paths.get(currentDirectory, newFileName).toString();
+					File file = new File(fileLocation);
+					File fileRenameTo = new File(newName);
+					file.renameTo(fileRenameTo);
+					newFileName = "";
+				}
+			} catch(Exception e) {
 				clientPrinter("-File wasn't renamed because filename was not specified or was invalid");
 			}
-			else {
-				String fileLocation = Paths.get(currentDirectory, fileToRename).toString();
-				String newName = Paths.get(currentDirectory, newFileName).toString();
-				File file = new File(fileLocation);
-				File fileRenameTo = new File(newName);
-				file.renameTo(fileRenameTo);
-				newFileName = "";
-			}
-		} catch(Exception e) {
-			clientPrinter("-File wasn't renamed because filename was not specified or was invalid");
 		}
 	}
 
@@ -275,7 +291,6 @@ public class server {
 	private static void handleSize(String fullCommand, Socket connectionSocket, int storeType, String serverFiles, String fileNameToStore) throws IOException {
 		String sizeOfFileString = fullCommand.substring(5);
 		long sizeOfFile = Integer.parseInt(sizeOfFileString);
-
 		long totalFreeSpace =  new File("c:").getFreeSpace() ;
 
 		if(totalFreeSpace < sizeOfFile) {
@@ -293,7 +308,8 @@ public class server {
 					stream.write(receivedFile);
 					stream.close();
 				} else if (storeType == 2) {
-					FileOutputStream stream = new FileOutputStream(currentDir() + serverFiles + "new-" + fileNameToStore);
+					fileNameToStore = "new-" + fileNameToStore;
+					FileOutputStream stream = new FileOutputStream(currentDir() + serverFiles + fileNameToStore);
 					stream.write(receivedFile);
 					stream.close();
 				} else {
@@ -301,7 +317,7 @@ public class server {
 					stream.write(receivedFile);
 					stream.close();
 				}
-				clientPrinter("+Saved fileNameToStore");
+				clientPrinter("+Saved " + fileNameToStore);
 			} catch (Exception e) {
 				storeType = 0;
 				clientPrinter("-Couldn't save");
@@ -347,80 +363,83 @@ public class server {
 					}catch (IndexOutOfBoundsException e) {
 						command = "";
 					}
+					try {
+						switch (command) {
+						case "USER":
+							handleUser(fullcommand);
+							break;
 
-					switch (command) {
-					case "USER":
-						handleUser(fullcommand);
-						break;
+						case "ACCT":
+							handleAcct(fullcommand);
+							break;
 
-					case "ACCT":
-						handleAcct(fullcommand);
-						break;
+						case "PASS":
+							handlePass(fullcommand);
+							break;
 
-					case "PASS":
-						handlePass(fullcommand);
-						break;
+						case "TYPE":
+							handleType(fullcommand);
+							break;
 
-					case "TYPE":
-						handleType(fullcommand);
-						break;
+						case "LIST":
+							handleList(fullcommand, myFiles, currentDirectory);
+							break;
 
-					case "LIST":
-						handleList(fullcommand, myFiles, currentDirectory);
-						break;
+						case "CDIR":
+							currentDirectory = handleCDIR(fullcommand, account, currentDirectory);
+							break;
 
-					case "CDIR":
-						currentDirectory = handleCDIR(fullcommand, account, currentDirectory);
-						break;
+						case "KILL":
+							handleKill(fullcommand, account, currentDirectory);
+							break;
 
-					case "KILL":
-						handleKill(fullcommand, account, currentDirectory);
-						break;
+						case "NAME":
+							fileToRename = handleName(fullcommand, account, currentDirectory);
+							break;
 
-					case "NAME":
-						fileToRename = handleName(fullcommand, account, currentDirectory);
-						break;
+						case "TOBE":
+							handleToBe(fullcommand, currentDirectory, fileToRename);
+							break;
 
-					case "TOBE":
-						handleToBe(fullcommand, currentDirectory, fileToRename);
-						break;
+						case "DONE":
+							clientPrinter("+Connection Closed");
+							running = false;
+							break;
 
-					case "DONE":
-						clientPrinter("+Connection Closed");
-						running = false;
-						break;
+						case "RETR":
+							fileToSendLocation = handleRETR(fullcommand, currentDirectory, fileToSendLocation);
+							break;
 
-					case "RETR":
-						fileToSendLocation = handleRETR(fullcommand, currentDirectory, fileToSendLocation);
-						break;
+						case "SEND":
+							handleSend(os, fileToSendLocation);
+							break;
 
-					case "SEND":
-						handleSend(os, fileToSendLocation);
-						break;
+						case "STOP":
+							clientPrinter("+ok, RETR aborted");
+							break;
 
-					case "STOP":
-						clientPrinter("+ok, RETR aborted");
-						break;
+						case "STOR":
+							fileNameToStore = fullcommand.substring(9);
+							storeType = handleSTOR(fullcommand, serverFiles);
+							break;
 
-					case "STOR":
-						fileNameToStore = fullcommand.substring(9);
-						storeType = handleSTOR(fullcommand, serverFiles);
-						break;
+						case "SIZE":
+							handleSize(fullcommand, connectionSocket, storeType, serverFiles, fileNameToStore); 
+							break;
 
-					case "SIZE":
-						handleSize(fullcommand, connectionSocket, storeType, serverFiles, fileNameToStore); 
-						break;
-
-					default:
-						clientPrinter("-Unknown Command");
-						break;
+						default:
+							clientPrinter("-Unknown Command");
+							break;
+						}
+					}
+					catch (Exception e) {
+						clientPrinter("-Unknown Command");	
 					}
 				}
 			}
-
-		}catch(Exception ioException) {
-			System.out.println("server ERROR");
-			ioException.printStackTrace();
+		}
+		catch(Exception ioException) {
+			clientPrinter("server ERROR");
 		}
 	}
 
