@@ -12,6 +12,8 @@ import java.awt.event.*;
 public class server {
 
 	static DataOutputStream  outToClient;
+	static Account account = new Account();
+
 
 	public static String currentDir() {
 		return System.getProperty("user.dir");
@@ -26,20 +28,22 @@ public class server {
 		}
 	}
 
-	private static void handleUser(String fullCommand, Account account) throws IOException {
-		String user = fullCommand.substring(4) ;
-		if(account.isLoggedIn(user)) {
-			clientPrinter("!<user-id> logged in");
-		}
-		else if(account.validUser(user)) {
-			clientPrinter("+User-id valid, send account and password");
+	private static void handleUser(String fullCommand) throws IOException {
+		String user = fullCommand.substring(5) ;
+		if(account.validUser(user)) {
+			if(account.isLoggedIn(user)) {
+				clientPrinter("!"+ user + " logged in");
+			}
+			else {
+				clientPrinter("+User-id valid, send account and password");
+			}
 		}
 		else {
 			clientPrinter("-Invalid user-id, try again");
 		}
 	}
 
-	private static void handleAcct(String fullCommand, Account account) throws IOException {
+	private static void handleAcct(String fullCommand) throws IOException {
 		String accountName = fullCommand.substring(4);
 
 		if(account.isLoggedIn(accountName)) {
@@ -53,7 +57,7 @@ public class server {
 		}	
 	}
 
-	private static void handlePass(String fullCommand, Account account) throws IOException {
+	private static void handlePass(String fullCommand) throws IOException {
 		String password = fullCommand.substring(4);
 		if(account.alreadyInAccount() && account.validPassword(password)){
 			clientPrinter("! Logged in");
@@ -308,10 +312,8 @@ public class server {
 
 	public static void main(String argv[]) throws Exception{
 		try {
-			System.out.println(currentDir());
 			ServerSocket welcomeSocket = new ServerSocket(6789);
 
-			Account account = new Account();
 			MyFiles myFiles = new MyFiles();
 			String serverFiles = "\\files\\";
 			String currentDirectory = currentDir();
@@ -348,15 +350,15 @@ public class server {
 
 					switch (command) {
 					case "USER":
-						handleUser(fullcommand, account);
+						handleUser(fullcommand);
 						break;
 
 					case "ACCT":
-						handleAcct(fullcommand, account);
+						handleAcct(fullcommand);
 						break;
 
 					case "PASS":
-						handlePass(fullcommand, account);
+						handlePass(fullcommand);
 						break;
 
 					case "TYPE":
