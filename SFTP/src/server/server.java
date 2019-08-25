@@ -325,7 +325,7 @@ public class server {
 		}
 	}
 
-
+	// STILL HAVE TO DO STORAGE CHECKING
 	public static void main(String argv[]) throws Exception{
 		try {
 			ServerSocket welcomeSocket = new ServerSocket(6789);

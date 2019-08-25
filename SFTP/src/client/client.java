@@ -104,10 +104,10 @@ public class client {
 		receivedFileName = outgoingMessage.substring(5);				
 		receivedFileSize = Integer.parseInt(r);
 		long totalFreeSpace =  new File("c:").getFreeSpace() ;
-		if(totalFreeSpace > receivedFileSize) {
-//			outgoingMessage = "STOP";
-//			outToServer.writeBytes(outgoingMessage + '\n');
-//			outToServer.flush();
+		if(totalFreeSpace < receivedFileSize) {
+			outgoingMessage = "STOP";
+			outToServer.writeBytes(outgoingMessage + '\n');
+			outToServer.flush();
 		}
 	}
 	
