@@ -149,13 +149,14 @@ public class server {
 		}
 	}
 
-	private static void handleName(String fullCommand, Account account, String currentDirectory, String fileToRename) throws IOException {
+	private static String handleName(String fullCommand, Account account, String currentDirectory) throws IOException {
+		String fileToRename = "";
 		if(account.alreadyInAccount()) {
 			String tempFileToRename = "";
 			try {
 				tempFileToRename = fullCommand.substring(5);
 
-				String fileLocation = Paths.get(currentDirectory, fileToRename).toString();
+				String fileLocation = Paths.get(currentDirectory + "\\" + tempFileToRename).toString();
 				Path path = Paths.get(fileLocation);
 				File file = new File(fileLocation); 
 				if(Files.exists(path)) {
@@ -172,6 +173,7 @@ public class server {
 		else {
 			clientPrinter("-You must send ACCT and PASS to use CDIR");
 		}
+		return fileToRename;
 	}
 
 	private static void handleToBe(String fullCommand, String currentDirectory, String fileToRename) throws IOException {
@@ -374,7 +376,7 @@ public class server {
 						break;
 
 					case "NAME":
-						handleName(fullcommand, account, currentDirectory, fileToRename);
+						fileToRename = handleName(fullcommand, account, currentDirectory);
 						break;
 
 					case "TOBE":
