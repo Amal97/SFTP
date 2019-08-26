@@ -31,6 +31,7 @@ public class server {
 
 	private static void handleUser(String fullCommand) throws IOException {
 		String user = fullCommand.substring(5) ;
+		loggedIn = false;
 		if(account.validUser(user)) {
 			if(account.isLoggedIn(user)) {
 				loggedIn = true;
@@ -47,12 +48,7 @@ public class server {
 
 	private static void handleAcct(String fullCommand) throws IOException {
 		String accountName = fullCommand.substring(4);
-
-		if(account.isLoggedIn(accountName)) {
-			loggedIn = true;
-			clientPrinter("! Account valid, logged-in");
-		}
-		else if(account.validAccount(accountName)) {
+		if(account.validAccount(accountName)) {
 			clientPrinter("+Account valid, send password");
 		}
 		else {

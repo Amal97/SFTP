@@ -12,17 +12,24 @@ public class Account {
 	int userFoundInLine;
 	static String filepath = System.getProperty("user.dir") + "\\src\\server\\data.txt";
 	boolean loggedIn = false;
+	boolean correctPassword = false;
 
 	private static Scanner x;
 
 	public boolean isLoggedIn(String user) {
-
 		if(this.user.equals(user)) {
 			return loggedIn;
 		}
 		else {
 			return false;
 		}
+	}
+	
+	public boolean passwordEntered() {
+		if(correctPassword) {
+			return true;
+		}
+		return false;
 	}
 
 	public boolean alreadyInAccount() {
@@ -49,6 +56,7 @@ public class Account {
 			tempPassword = x.next();
 
 			if(tempPassword.trim().equals(password.trim())) {
+				correctPassword = true;
 				found = true; 
 			}
 
