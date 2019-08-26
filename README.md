@@ -17,7 +17,7 @@ SFTP is used by opening a TCP connection to the remote hosts' SFTP port (115 dec
       <response> : = <response-code> [<message>] <NULL>
       <response-code> : =  + | - |   | !
 
-
+For more info: https://tools.ietf.org/html/rfc913
 # File Directory 
 
 The files in the directory are:
