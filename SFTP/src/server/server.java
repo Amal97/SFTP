@@ -74,25 +74,30 @@ public class server {
 		}		
 	}
 
-	private static void handleType(String fullCommand) throws IOException {
+	private static String handleType(String fullCommand) throws IOException {
 		if(loggedIn) {
-			String type = fullCommand.substring(5);
+			String typeFromUser = fullCommand.substring(5);
 
-			if(type.equals("A")) {
+			if(typeFromUser.equals("A")) {
 				clientPrinter("+Using Ascii mode");
+				return "A";
 			}
-			else if(type.equals("B")) {
+			else if(typeFromUser.equals("B")) {
 				clientPrinter("+Using Binary mode");
+				return "B";
 			}
-			else if(type.equals("C")) {
+			else if(typeFromUser.equals("C")) {
 				clientPrinter("+Using Continuous mode");
+				return "C";
 			}
 			else {
 				clientPrinter("-Type not valid");
+				return "B";
 			}
 		}
 		else {
 			clientPrinter("Please log in");
+			return "B";
 		}
 	}
 
@@ -115,11 +120,10 @@ public class server {
 	}
 
 	private static String handleCDIR(String fullCommand, Account account, String currentDirectory) throws IOException {
+		String newDir = fullCommand.substring(5);
+		String checkNewDir = Paths.get(currentDirectory, newDir).toString();
+		Path path = Paths.get(checkNewDir);
 		if(loggedIn) {
-			String newDir = fullCommand.substring(5);
-			String checkNewDir = Paths.get(currentDirectory, newDir).toString();
-			Path path = Paths.get(checkNewDir);
-
 			if(newDir.equals("..")) {
 				currentDirectory =  new File(System.getProperty("user.dir")).getParentFile().toString();
 				clientPrinter("!Changed working dir to "+currentDirectory);
@@ -139,7 +143,12 @@ public class server {
 			}
 		}
 		else {
-			clientPrinter("-You must send ACCT and PASS to use CDIR");
+			if(Files.exists(path)) {
+				clientPrinter("+directory ok, send account/password");
+			}
+			else {
+				clientPrinter("-Can't connect to directory because: directory doesn't exist");
+			}
 		}
 		return currentDirectory;
 
@@ -236,15 +245,19 @@ public class server {
 		return null;
 	}
 
-	private static void handleSend(OutputStream os, String fileToSendLocation) throws IOException {
-		File fileToSend = new File(fileToSendLocation);							  
+	private static String handleSend(OutputStream os, String fileToSendLocation) throws IOException {
+		File fileToSend = new File(fileToSendLocation);		
+		String message = "";
 		try {
 			byte[] content = Files.readAllBytes(fileToSend.toPath());
 			os.write(content);
-			clientPrinter("File Saved on Client's side");
+			os.flush();
+			message = "File Saved on Client's side";
+			//clientPrinter("File Saved on Client's side");
 		} catch(IOException e) {
 			clientPrinter("File Could not be saved");
 		}	
+		return message;
 	}
 
 	private static int handleSTOR(String fullCommand, String serverFiles) throws IOException {
@@ -337,8 +350,10 @@ public class server {
 			String fileToSendLocation = "";
 			String fullcommand = "";
 			String command = "";
-			int storeType = 0;
 			String fileNameToStore = "";
+			String type = "B";	// default type in binary
+			int storeType = 0;
+
 
 			boolean running = true;
 
@@ -378,7 +393,7 @@ public class server {
 							break;
 
 						case "TYPE":
-							handleType(fullcommand);
+							type = handleType(fullcommand);
 							break;
 
 						case "LIST":
@@ -411,7 +426,9 @@ public class server {
 							break;
 
 						case "SEND":
-							handleSend(os, fileToSendLocation);
+							String response;
+							response = handleSend(os, fileToSendLocation);
+							clientPrinter(response);
 							break;
 
 						case "STOP":
@@ -436,6 +453,7 @@ public class server {
 						clientPrinter("-Unknown Command");	
 					}
 				}
+				connectionSocket.close();
 			}
 		}
 		catch(Exception ioException) {

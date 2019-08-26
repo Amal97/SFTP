@@ -31,15 +31,14 @@ public class client {
 
 		String r;
 		byte[] bytes = new byte[(int)receivedFileSize]; // Declare byte array with file size
-		boolean worked = false;
 		boolean binary = false;
 		clientSocket.setSoTimeout(5*1000); // Set timeout in case data doesn't come
 
-		DataInputStream in = new DataInputStream(new BufferedInputStream(clientSocket.getInputStream()));
+		//DataInputStream in = new DataInputStream(new BufferedInputStream(clientSocket.getInputStream()));
 
 		try {
 			for (int i = 0; i < receivedFileSize; i++) {
-				bytes[i] = (byte) in.read();
+				bytes[i] = (byte) clientSocket.getInputStream().read();
 
 				if ((int)bytes[i] < 0) { // File is binary if MSB is negative
 					binary = true;
@@ -57,8 +56,8 @@ public class client {
 				FileOutputStream createdFile = new FileOutputStream(currentDir() + "/clientFiles/" + receivedFileName);
 				createdFile.write(bytes);
 				createdFile.close();	  
-				r = inFromServer.readLine();
-				System.out.println(r);
+//				r = inFromServer.readLine();
+//				System.out.println(r);
 			}
 		}catch (SocketTimeoutException e) {
 			// Stop socket timeout immediately
@@ -150,6 +149,7 @@ public class client {
 		inFromServer = new BufferedReader(new InputStreamReader(clientSocket.getInputStream())); 
 
 		r = receiveMessage();
+		boolean sendMessage = false;
 
 		while(true) {
 			outgoingMessage = inFromUser.readLine();
@@ -160,6 +160,7 @@ public class client {
 
 			else if(outgoingMessage.contains("SEND")) {
 				handleSend(outgoingMessage, clientSocket, fileType);
+				sendMessage = true;
 			}
 
 			else if(outgoingMessage.contains("STOR")) {
@@ -173,12 +174,19 @@ public class client {
 				sendCommand(outgoingMessage);
 			}
 
-			r = receiveMessageNewLine();
-			
-			while(inFromServer.ready()) {
-				r = receiveMessageNewLine();
+			if(sendMessage) {
+				sendMessage = false;	
+				r = receiveMessage();
+				while(inFromServer.ready()) {
+					r = receiveMessage();
+				}
+			}else {
+				r = receiveMessage();
+				
+				while(inFromServer.ready()) {
+					r = receiveMessage();
+				}
 			}
-
 
 			if(outgoingMessage.contains("RETR")) {
 				handleRetr(outgoingMessage, r);

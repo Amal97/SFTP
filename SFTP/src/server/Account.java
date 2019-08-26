@@ -90,6 +90,10 @@ public class Account {
 		boolean found = false;
 		boolean superUser = false;
 		userFoundInLine = 0;
+		this.account = "";
+		this.user = "";
+		this.password = "";
+		
 		try {
 			String tempUser = "";
 			x = new Scanner(new File(filepath));
