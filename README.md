@@ -50,7 +50,7 @@ To run the server and client (run server first):
 
 Assumptions:
     - Server runs on PORT 6789
-    - Commands and parameters must be one space apart to work succesfully
+   \- Commands and parameters must be one space apart to work succesfully
     
 # Test
 The 1st line of text is from the client while the indented lines below are from the server. eg:
@@ -65,7 +65,7 @@ All login information are saved in the data.txt which is saved in the server. Th
 - harry,account3,harry123
 
 -The "super" user does not require ACCT or PASS
--Each login is composed of USER,ACCT,PASS
+\-Each login is composed of USER,ACCT,PASS
 
 ## USER
 Enter USER:
