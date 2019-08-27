@@ -49,7 +49,7 @@ To run the server and client (run server first):
     java client/client
 
 Assumptions:
-    - Server runs on PORT 6789   
+   - Server runs on PORT 6789   
    - Commands and parameters must be one space apart to work succesfully
     
 # Test
