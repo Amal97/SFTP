@@ -49,8 +49,8 @@ To run the server and client (run server first):
     java client/client
 
 Assumptions:
-    - Server runs on PORT 6789
-   \- Commands and parameters must be one space apart to work succesfully
+    - Server runs on PORT 6789   
+   - Commands and parameters must be one space apart to work succesfully
     
 # Test
 The 1st line of text is from the client while the indented lines below are from the server. eg:
@@ -64,8 +64,8 @@ All login information are saved in the data.txt which is saved in the server. Th
 - dick,account2,dick123
 - harry,account3,harry123
 
--The "super" user does not require ACCT or PASS
-\-Each login is composed of USER,ACCT,PASS
+-The "super" user does not require ACCT or PASS   
+-Each login is composed of USER,ACCT,PASS
 
 ## USER
 Enter USER:
