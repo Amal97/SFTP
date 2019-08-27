@@ -34,6 +34,9 @@ The files in the directory are:
     -server.java
 
 # Comiling and Running
+
+# This has been tested on Windows
+
 Navigate to src:
 
     cd src
@@ -42,11 +45,15 @@ To build the java files :
 
     javac server/*.java
     javac client/*.java
+    
+Go back to root :
+      
+      cd ..
 
-To run the server and client (run server first): 
+To run the server and client (run server first) in different console: 
 
-    java server/server
-    java client/client
+    java -cp src/ server/server
+    java -cp src/ client/client
 
 Assumptions:
    - Server runs on PORT 6789   
