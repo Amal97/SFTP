@@ -25,13 +25,13 @@ The files in the directory are:
 - clientFiles/
 - files/
 - src/
-    - client/
+    - client/  
     -client.java
-    - server/
-    -Account.java
-    -data.txt
-    -MyFiles.java
-    -server.java
+    - server/  
+    -Account.java  
+    -data.txt  
+    -MyFiles.java  
+    -server.java  
 
 # Comiling and Running
 
