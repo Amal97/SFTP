@@ -3,7 +3,6 @@ Author: Amal Chandra
 UPI: acha932
 ID: 890345562
 
-[![Build Status](https://travis-ci.org/joemccann/dillinger.svg?branch=master)](https://travis-ci.org/joemccann/dillinger)
 
 Implement SFTP described in RFC 913 using Java. 
 SFTP is a simple file transfer protocol.  It fills the need of people wanting a protocol that is more useful than TFTP but easier to implement (and less powerful) than FTP.  SFTP supports user access control, file transfers, directory listing, directory changing, file renaming and deleting.
